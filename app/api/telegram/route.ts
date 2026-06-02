@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import bot from "./botTelegram";
+
+import { bot } from "@/bot/bot";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
