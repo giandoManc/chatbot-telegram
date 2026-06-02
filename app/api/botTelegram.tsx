@@ -1,34 +1,11 @@
-import { Telegraf } from "telegraf";
 import { prisma } from "@/app/lib/prisma";
+import { Telegraf } from "telegraf";
+import Bot from "./bot";
 
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN!);
 
 bot.start(async (ctx) => {
-  const telegramId = String(ctx.from.id);
-
-  const user = await prisma.user.findUnique({
-    where: { telegramId },
-  });
-
-  if (!user) {
-    await prisma.user.create({
-      data: {
-        telegramId,
-        username: ctx.from.username,
-        firstName: ctx.from.first_name,
-        step: "ask_age",
-        onboardingCompleted: false,
-      },
-    });
-
-    return ctx.reply("Ciao 👋 Prima di iniziare, quanti anni hai?");
-  }
-
-  if (!user.onboardingCompleted) {
-    return ctx.reply("Completiamo prima il profilo. Rispondi alla domanda precedente.");
-  }
-
-  return ctx.reply("Bentornato 💪 Scrivimi cosa hai mangiato oggi.");
+  await Bot.start(ctx);
 });
 
 bot.command("reset", async (ctx) => {
@@ -130,7 +107,9 @@ bot.on("text", async (ctx) => {
         },
       });
 
-      return ctx.reply("Qual è il tuo obiettivo? Dimagrire, massa o mantenimento?");
+      return ctx.reply(
+        "Qual è il tuo obiettivo? Dimagrire, massa o mantenimento?",
+      );
     }
 
     if (user.step === "ask_goal") {
@@ -143,7 +122,9 @@ bot.on("text", async (ctx) => {
         },
       });
 
-      return ctx.reply("Perfetto ✅ Profilo creato. Ora scrivimi cosa hai mangiato oggi.");
+      return ctx.reply(
+        "Perfetto ✅ Profilo creato. Ora scrivimi cosa hai mangiato oggi.",
+      );
     }
   }
 
