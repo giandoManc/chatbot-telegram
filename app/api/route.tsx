@@ -1,4 +1,4 @@
-import {  NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { Telegraf } from "telegraf";
 import { prisma } from "@/app/lib/prisma";
 
@@ -30,6 +30,31 @@ bot.start(async (ctx) => {
   }
 
   return ctx.reply("Bentornato 💪 Scrivimi cosa hai mangiato oggi.");
+});
+
+bot.command("reset", async (ctx) => {
+  const telegramId = String(ctx.from.id);
+
+  await prisma.user.upsert({
+    where: { telegramId },
+    update: {
+      age: null,
+      height: null,
+      weight: null,
+      goal: null,
+      step: "ask_age",
+      onboardingCompleted: false,
+    },
+    create: {
+      telegramId,
+      username: ctx.from.username,
+      firstName: ctx.from.first_name,
+      step: "ask_age",
+      onboardingCompleted: false,
+    },
+  });
+
+  return ctx.reply("Profilo resettato. Quanti anni hai?");
 });
 
 bot.on("text", async (ctx) => {
@@ -126,23 +151,13 @@ bot.on("text", async (ctx) => {
   return ctx.reply(`Ok, ora posso analizzare il tuo pasto: ${message}`);
 });
 
-bot.command("reset", async (ctx) => {
-  const telegramId = String(ctx.from.id);
-  console.log(`Resetting profile for user ${telegramId}`);
-  await prisma.user.update({
-    where: { telegramId },
-    data: {
-      age: null,
-      height: null,
-      weight: null,
-      goal: null,
-      step: "ask_age",
-      onboardingCompleted: false,
-    },
-  });
+export async function POST(req: NextRequest) {
+  const body = await req.json();
 
-  return ctx.reply("Profilo resettato. Scrivimi qualcosa per ricominciare.");
-});
+  await bot.handleUpdate(body);
+
+  return NextResponse.json({ ok: true });
+}
 
 export async function GET() {
   return NextResponse.json({
