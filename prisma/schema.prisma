@@ -18,4 +18,16 @@ model User {
   createdAt           DateTime @default(now())
   username            String?
   firstName           String?
+  meals               Meal[]
+}
+
+model Meal {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  calories  Float?
+  protein   Float?
+  carbs     Float?
+  fat       Float?
 }

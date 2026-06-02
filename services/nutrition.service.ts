@@ -1,7 +1,26 @@
-import { generateAiResponse } from "./ai.service";
+type NutritionItem = {
+  name: string;
+  calories: number;
+  protein_g: number;
+  carbohydrates_total_g: number;
+  fat_total_g: number;
+};
 
 export async function analyzeMeal(message: string) {
-  await generateAiResponse(message);
+  const response = await fetch(
+    `https://api.calorieninjas.com/v1/nutrition?query=${encodeURIComponent(message)}`,
+    {
+      headers: {
+        "X-Api-Key": process.env.CALORIE_NINJAS_API_KEY!,
+      },
+    },
+  );
 
-  return `Ok, ora posso analizzare il tuo pasto: ${message}`;
+  if (!response.ok) {
+    return [];
+  }
+
+  const data = await response.json();
+  const items = data.items as NutritionItem[];
+  return items;
 }
