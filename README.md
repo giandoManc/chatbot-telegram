@@ -35,3 +35,18 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 # chatbot-telegram
+
+API-only Next.js webhook for a Telegram bot.
+
+Required environment variables:
+
+```bash
+DATABASE_URL="postgresql://..."
+TELEGRAM_BOT_TOKEN="..."
+```
+
+Set the webhook without committing the bot token:
+
+```bash
+curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook?url=https://chatbot-telegram-hu7m.onrender.com/api"
+```
