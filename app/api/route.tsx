@@ -128,7 +128,7 @@ bot.on("text", async (ctx) => {
 
 bot.command("reset", async (ctx) => {
   const telegramId = String(ctx.from.id);
-
+  console.log(`Resetting profile for user ${telegramId}`);
   await prisma.user.update({
     where: { telegramId },
     data: {
