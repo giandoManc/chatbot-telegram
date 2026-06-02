@@ -25,6 +25,7 @@ export function registerMealsHandler(bot: Telegraf<BotContext>) {
     await prisma.meal.create({
       data: {
         userId: ctx.state.user!.id,
+        name: ctx.message.text,
         ...totals,
       },
     });
