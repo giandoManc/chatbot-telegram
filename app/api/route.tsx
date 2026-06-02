@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import {  NextResponse } from "next/server";
 import { Telegraf } from "telegraf";
 import { prisma } from "@/app/lib/prisma";
 
@@ -126,13 +126,23 @@ bot.on("text", async (ctx) => {
   return ctx.reply(`Ok, ora posso analizzare il tuo pasto: ${message}`);
 });
 
-export async function POST(req: NextRequest) {
-  const body = await req.json();
+bot.command("reset", async (ctx) => {
+  const telegramId = String(ctx.from.id);
 
-  await bot.handleUpdate(body);
+  await prisma.user.update({
+    where: { telegramId },
+    data: {
+      age: null,
+      height: null,
+      weight: null,
+      goal: null,
+      step: "ask_age",
+      onboardingCompleted: false,
+    },
+  });
 
-  return NextResponse.json({ ok: true });
-}
+  return ctx.reply("Profilo resettato. Scrivimi qualcosa per ricominciare.");
+});
 
 export async function GET() {
   return NextResponse.json({
