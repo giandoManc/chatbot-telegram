@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Meal"
+ADD COLUMN IF NOT EXISTS "name" TEXT;

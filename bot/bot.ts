@@ -1,5 +1,6 @@
 import { Telegraf } from "telegraf";
 
+import { registerDailyHandler } from "./handlers/daily";
 import { registerMealsHandler } from "./handlers/meals";
 import { registerOnboardingHandler } from "./handlers/onboarding";
 import { registerProfileHandlers } from "./handlers/profile";
@@ -12,5 +13,6 @@ bot.use(loadUser);
 
 registerStartHandler(bot);
 registerProfileHandlers(bot);
+registerDailyHandler(bot);
 registerOnboardingHandler(bot);
 registerMealsHandler(bot);

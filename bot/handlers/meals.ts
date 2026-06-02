@@ -4,16 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { analyzeMeal } from "@/services/nutrition.service";
 import type { BotContext } from "../middleware/loadUser";
 
-interface MealAnalysis {
-  name?: string | null;
-  calories: GLfloat | null;
-  protein: GLfloat | null;
-  carbs: GLfloat | null;
-  fat: GLfloat | null;
-}
-
 export function registerMealsHandler(bot: Telegraf<BotContext>) {
   bot.on("text", async (ctx) => {
+    if (!ctx.state.user) {
+      return ctx.reply("Completa prima il profilo con /start.");
+    }
+
     const result = await analyzeMeal(ctx.message.text);
     if (!result.length) {
       ctx.reply(`Non ho trovato valori nutrizionali per: ${ctx.message.text}`);
@@ -47,40 +43,5 @@ export function registerMealsHandler(bot: Telegraf<BotContext>) {
         `Grassi: ${totals.fat.toFixed(1)} g`,
       ].join("\n"),
     );
-
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-
-    const meals: MealAnalysis[] = await prisma.meal.findMany({
-      where: {
-        userId: ctx.state.user!.id,
-        createdAt: {
-          gte: startOfToday,
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-    let text = "";
-    const totCount = {
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fat: 0,
-    };
-    for (const meal of meals) {
-      totCount.calories += meal.calories || 0;
-      totCount.protein += meal.protein || 0;
-      totCount.carbs += meal.carbs || 0;
-      totCount.fat += meal.fat || 0;
-    }
-
-    text = `Totale oggi:\nCalorie: ${Math.round(totCount.calories)} kcal\n
-    Proteine: ${totCount.protein.toFixed(1)} g\n
-    Carboidrati: ${totCount.carbs.toFixed(1)} g\n
-    Grassi: ${totCount.fat.toFixed(1)} g`;
-
-    await ctx.reply(text);
   });
 }
