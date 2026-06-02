@@ -11,7 +11,15 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is not set");
 }
 
-const adapter = new PrismaPg({ connectionString });
+const databaseUrl = new URL(connectionString);
+const shouldUseSsl =
+  databaseUrl.searchParams.get("sslmode") === "require" ||
+  databaseUrl.hostname.endsWith(".render.com");
+
+const adapter = new PrismaPg({
+  connectionString,
+  ssl: shouldUseSsl,
+});
 
 export const prisma =
   globalForPrisma.prisma ||

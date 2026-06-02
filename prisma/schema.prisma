@@ -9,8 +9,6 @@ datasource db {
 model User {
   id                  Int      @id @default(autoincrement())
   telegramId          String   @unique
-  username            String?
-  firstName           String?
   age                 Int?
   height              Int?
   weight              Float?
@@ -18,4 +16,6 @@ model User {
   onboardingCompleted Boolean  @default(false)
   step                String?
   createdAt           DateTime @default(now())
+  username            String?
+  firstName           String?
 }
