@@ -16,6 +16,42 @@ type ChatMessage = {
   content: string;
 };
 
+const mealNutritionResponseFormat = {
+  type: "json_schema",
+  json_schema: {
+    name: "meal_nutrition",
+    strict: true,
+    schema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["items"],
+      properties: {
+        items: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: [
+              "name",
+              "calories",
+              "protein_g",
+              "carbohydrates_total_g",
+              "fat_total_g",
+            ],
+            properties: {
+              name: { type: "string" },
+              calories: { type: "number" },
+              protein_g: { type: "number" },
+              carbohydrates_total_g: { type: "number" },
+              fat_total_g: { type: "number" },
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
 export async function generateAiResponse(prompt: string) {
   const apiKey = process.env.OPENROUTER_API_KEY;
 
@@ -137,25 +173,39 @@ export async function streamAiResponse(
 }
 
 export async function generateMealJson(prompt: string) {
-  const response = await openRouterChat({
-    messages: [
-      {
-        role: "system",
-        content: [
-          "Sei un estrattore nutrizionale per un bot Telegram.",
-          "Stima calorie e macronutrienti da descrizioni di pasti in italiano.",
-          "Rispondi solo con JSON valido, senza markdown.",
-          "Se non sei sicuro, fai una stima prudente.",
-          "Schema: {\"items\":[{\"name\":\"string\",\"calories\":number,\"protein_g\":number,\"carbohydrates_total_g\":number,\"fat_total_g\":number}]}",
-        ].join(" "),
-      },
-      {
-        role: "user",
-        content: prompt,
-      },
-    ],
+  const messages: ChatMessage[] = [
+    {
+      role: "system",
+      content: [
+        "Sei un estrattore nutrizionale per un bot Telegram.",
+        "Stima calorie e macronutrienti da descrizioni di pasti in italiano.",
+        "Devi restituire sempre e solo JSON valido, senza markdown, testo extra o commenti.",
+        "La struttura deve essere sempre identica:",
+        "{\"items\":[{\"name\":\"string\",\"calories\":number,\"protein_g\":number,\"carbohydrates_total_g\":number,\"fat_total_g\":number}]}",
+        "Non aggiungere campi diversi da quelli indicati.",
+        "Usa numeri, non stringhe, per calorie e macronutrienti.",
+        "Se ci sono più alimenti, crea un item per ogni alimento.",
+        "Se la descrizione è vaga, fai una stima prudente.",
+      ].join(" "),
+    },
+    {
+      role: "user",
+      content: prompt,
+    },
+  ];
+
+  let response = await openRouterChat({
+    messages,
     temperature: 0.1,
+    responseFormat: mealNutritionResponseFormat,
   });
+
+  if (!response.ok && response.status === 400) {
+    response = await openRouterChat({
+      messages,
+      temperature: 0.1,
+    });
+  }
 
   if (!response.ok) {
     return null;
@@ -210,9 +260,11 @@ export async function transcribeAudio(input: {
 function openRouterChat({
   messages,
   temperature,
+  responseFormat,
 }: {
   messages: ChatMessage[];
   temperature: number;
+  responseFormat?: unknown;
 }) {
   const apiKey = process.env.OPENROUTER_API_KEY;
 
@@ -232,6 +284,7 @@ function openRouterChat({
       model: process.env.OPENROUTER_MODEL || "openrouter/free",
       messages,
       temperature,
+      ...(responseFormat ? { response_format: responseFormat } : {}),
     }),
   });
 }

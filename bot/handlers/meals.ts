@@ -13,12 +13,13 @@ export function registerMealsHandler(bot: Telegraf<BotContext>) {
 
     const result = await analyzeMeal(ctx.message.text);
     if (!result.length) {
-      return ctx.reply(`Non ho trovato valori nutrizionali per: ${ctx.message.text}`);
+      return ctx.reply(
+        `Non ho trovato valori nutrizionali per: ${ctx.message.text}`,
+      );
     }
 
     const totals = await saveMeal({
       userId: ctx.state.user.id,
-      name: ctx.message.text,
       items: result,
     });
 
@@ -36,26 +37,27 @@ export function registerMealsHandler(bot: Telegraf<BotContext>) {
     const transcription = await transcribeTelegramVoice(fileUrl);
 
     if (!transcription) {
-      return ctx.reply("Non sono riuscito a trascrivere il vocale. Prova a scrivere il pasto.");
+      return ctx.reply(
+        "Non sono riuscito a trascrivere il vocale. Prova a scrivere il pasto.",
+      );
     }
 
     const result = await analyzeMeal(transcription);
 
     if (!result.length) {
-      return ctx.reply(`Ho capito: "${transcription}", ma non ho trovato valori nutrizionali.`);
+      return ctx.reply(
+        `Ho capito: "${transcription}", ma non ho trovato valori nutrizionali.`,
+      );
     }
 
     const totals = await saveMeal({
       userId: ctx.state.user.id,
-      name: transcription,
       items: result,
     });
 
-    return ctx.reply([
-      `Ho capito: "${transcription}"`,
-      "",
-      formatMealReply(totals),
-    ].join("\n"));
+    return ctx.reply(
+      [`Ho capito: "${transcription}"`, "", formatMealReply(totals)].join("\n"),
+    );
   });
 }
 
@@ -76,11 +78,9 @@ type MealTotals = {
 
 async function saveMeal({
   userId,
-  name,
   items,
 }: {
   userId: number;
-  name: string;
   items: NutritionItem[];
 }) {
   const totals = getMealTotals(items);
@@ -88,7 +88,6 @@ async function saveMeal({
   await prisma.meal.create({
     data: {
       userId,
-      name,
       ...totals,
     },
   });
