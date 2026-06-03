@@ -1,3 +1,5 @@
+import type { CompletionCreateParams } from "groq-sdk/resources/chat";
+
 const nutritionItemSchema = {
   type: "object",
   additionalProperties: false,
@@ -22,7 +24,7 @@ export const nutritionItemsSchema = {
   items: nutritionItemSchema,
 };
 
-export const userCommandResponseFormat = {
+export const userCommandResponseFormat: CompletionCreateParams.ResponseFormatJsonSchema = {
   type: "json_schema",
   json_schema: {
     name: "user_command",

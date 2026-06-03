@@ -1,3 +1,5 @@
+import type { CompletionCreateParams } from "groq-sdk/resources/chat";
+
 export type ChatMessage = {
   role: "system" | "user";
   content: string;
@@ -34,10 +36,13 @@ export type AiUserCommand =
       meal: null;
     };
 
-export type OpenRouterChatOptions = {
+export type AiChatOptions = {
   messages: ChatMessage[];
   temperature: number;
-  responseFormat?: unknown;
+  responseFormat?:
+    | CompletionCreateParams.ResponseFormatText
+    | CompletionCreateParams.ResponseFormatJsonSchema
+    | CompletionCreateParams.ResponseFormatJsonObject;
   stream?: boolean;
 };
 

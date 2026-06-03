@@ -1,5 +1,5 @@
 import { extractJson } from "./json";
-import { openRouterChat } from "./openrouter.client";
+import { groqChat } from "./groq.client";
 import { userCommandPrompt } from "./prompts";
 import { userCommandResponseFormat } from "./schemas";
 import type { AiUserCommand, ChatMessage, NutritionItem } from "./types";
@@ -16,25 +16,24 @@ export async function parseUserCommand(message: string): Promise<AiUserCommand> 
     },
   ];
 
-  let response = await openRouterChat({
+  let response = await groqChat({
     messages,
     temperature: 0.1,
     responseFormat: userCommandResponseFormat,
   });
 
-  if (!response.ok && response.status === 400) {
-    response = await openRouterChat({
+  if (!response) {
+    response = await groqChat({
       messages,
       temperature: 0.1,
     });
   }
 
-  if (!response.ok) {
+  if (!response) {
     return unknownCommand();
   }
 
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
+  const content = response.choices?.[0]?.message?.content;
 
   if (typeof content !== "string") {
     return unknownCommand();
