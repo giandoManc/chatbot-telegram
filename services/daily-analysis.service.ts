@@ -2,7 +2,7 @@ import type { Meal, User } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 
-import { generateAiResponse, streamAiResponse } from "./ai.service";
+import { generateAiResponse, streamAiResponse } from "@/services/ai";
 
 type DailyTotals = {
   calories: number;

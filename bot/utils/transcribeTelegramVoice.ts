@@ -1,4 +1,4 @@
-import { transcribeAudio } from "./ai.service";
+import { transcribeAudio } from "@/services/ai";
 
 export async function transcribeTelegramVoice(fileUrl: URL) {
   const response = await fetch(fileUrl);
