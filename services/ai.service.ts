@@ -9,6 +9,13 @@ const systemPrompt = [
   "Se i dati sono pochi, dillo chiaramente.",
 ].join(" ");
 
+const openRouterUrl = "https://openrouter.ai/api/v1/chat/completions";
+
+type ChatMessage = {
+  role: "system" | "user";
+  content: string;
+};
+
 export async function generateAiResponse(prompt: string) {
   const apiKey = process.env.OPENROUTER_API_KEY;
 
@@ -16,32 +23,19 @@ export async function generateAiResponse(prompt: string) {
     return "Analisi AI non disponibile: manca OPENROUTER_API_KEY.";
   }
 
-  const response = await fetch(
-    "https://openrouter.ai/api/v1/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": process.env.APP_URL || "http://localhost:3000",
-        "X-Title": "Telegram Nutrition Bot",
+  const response = await openRouterChat({
+    messages: [
+      {
+        role: "system",
+        content: systemPrompt,
       },
-      body: JSON.stringify({
-        model: "openrouter/free",
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt,
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.4,
-      }),
-    },
-  );
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
+    temperature: 0.4,
+  });
 
   if (!response.ok) {
     return "Non riesco a generare l'analisi AI al momento. Riprova più tardi.";
@@ -67,7 +61,7 @@ export async function streamAiResponse(
     return "Analisi AI non disponibile: manca OPENROUTER_API_KEY.";
   }
 
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  const response = await fetch(openRouterUrl, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -76,7 +70,7 @@ export async function streamAiResponse(
       "X-Title": "Telegram Nutrition Bot",
     },
     body: JSON.stringify({
-      model: "openrouter/free",
+      model: process.env.OPENROUTER_MODEL || "openrouter/free",
       messages: [
         {
           role: "system",
@@ -140,4 +134,125 @@ export async function streamAiResponse(
   }
 
   return fullText.trim() || "Non ho ricevuto un'analisi valida dal modello.";
+}
+
+export async function generateMealJson(prompt: string) {
+  const response = await openRouterChat({
+    messages: [
+      {
+        role: "system",
+        content: [
+          "Sei un estrattore nutrizionale per un bot Telegram.",
+          "Stima calorie e macronutrienti da descrizioni di pasti in italiano.",
+          "Rispondi solo con JSON valido, senza markdown.",
+          "Se non sei sicuro, fai una stima prudente.",
+          "Schema: {\"items\":[{\"name\":\"string\",\"calories\":number,\"protein_g\":number,\"carbohydrates_total_g\":number,\"fat_total_g\":number}]}",
+        ].join(" "),
+      },
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
+    temperature: 0.1,
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content;
+
+  if (typeof content !== "string") {
+    return null;
+  }
+
+  return extractJson(content);
+}
+
+export async function transcribeAudio(input: {
+  data: string;
+  format: string;
+  language?: string;
+}) {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+
+  if (!apiKey) {
+    return null;
+  }
+
+  const response = await fetch("https://openrouter.ai/api/v1/audio/transcriptions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      input_audio: {
+        data: input.data,
+        format: input.format,
+      },
+      model: process.env.OPENROUTER_TRANSCRIPTION_MODEL || "openai/whisper-large-v3",
+      language: input.language || "it",
+    }),
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = await response.json();
+
+  return typeof data.text === "string" ? data.text.trim() : null;
+}
+
+function openRouterChat({
+  messages,
+  temperature,
+}: {
+  messages: ChatMessage[];
+  temperature: number;
+}) {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+
+  if (!apiKey) {
+    return Promise.resolve(new Response(null, { status: 401 }));
+  }
+
+  return fetch(openRouterUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": process.env.APP_URL || "http://localhost:3000",
+      "X-Title": "Telegram Nutrition Bot",
+    },
+    body: JSON.stringify({
+      model: process.env.OPENROUTER_MODEL || "openrouter/free",
+      messages,
+      temperature,
+    }),
+  });
+}
+
+function extractJson(content: string) {
+  const trimmed = content.trim();
+
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    const start = trimmed.indexOf("{");
+    const end = trimmed.lastIndexOf("}");
+
+    if (start === -1 || end === -1 || end <= start) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(trimmed.slice(start, end + 1));
+    } catch {
+      return null;
+    }
+  }
 }
