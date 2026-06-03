@@ -8,11 +8,11 @@ export async function transcribeTelegramVoice(fileUrl: URL) {
   }
 
   const audioBuffer = await response.arrayBuffer();
-  const audioBase64 = Buffer.from(audioBuffer).toString("base64");
 
   return transcribeAudio({
-    data: audioBase64,
-    format: "ogg",
+    data: audioBuffer,
+    fileName: "telegram-voice.ogg",
+    mimeType: "audio/ogg",
     language: "it",
   });
 }

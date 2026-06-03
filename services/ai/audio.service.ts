@@ -1,6 +1,6 @@
 import type { AudioTranscriptionInput } from "./types";
-import { transcribeOpenRouterAudio } from "./openrouter.client";
+import { transcribeGroqAudio } from "./groq.client";
 
 export function transcribeAudio(input: AudioTranscriptionInput) {
-  return transcribeOpenRouterAudio(input);
+  return transcribeGroqAudio(input);
 }

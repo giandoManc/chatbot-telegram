@@ -1,8 +1,6 @@
-import type { AudioTranscriptionInput, OpenRouterChatOptions } from "./types";
+import type { OpenRouterChatOptions } from "./types";
 
 const chatCompletionsUrl = "https://openrouter.ai/api/v1/chat/completions";
-const audioTranscriptionsUrl =
-  "https://openrouter.ai/api/v1/audio/transcriptions";
 
 export function hasOpenRouterApiKey() {
   return Boolean(process.env.OPENROUTER_API_KEY);
@@ -103,38 +101,4 @@ export async function streamOpenRouterChat({
   }
 
   return fullText.trim();
-}
-
-export async function transcribeOpenRouterAudio(input: AudioTranscriptionInput) {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-
-  if (!apiKey) {
-    return null;
-  }
-
-  const response = await fetch(audioTranscriptionsUrl, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      input_audio: {
-        data: input.data,
-        format: input.format,
-      },
-      model:
-        process.env.OPENROUTER_TRANSCRIPTION_MODEL ||
-        "openai/whisper-large-v3",
-      language: input.language || "it",
-    }),
-  });
-
-  if (!response.ok) {
-    return null;
-  }
-
-  const data = await response.json();
-
-  return typeof data.text === "string" ? data.text.trim() : null;
 }

@@ -42,7 +42,8 @@ export type OpenRouterChatOptions = {
 };
 
 export type AudioTranscriptionInput = {
-  data: string;
-  format: string;
+  data: ArrayBuffer;
+  fileName: string;
+  mimeType: string;
   language?: string;
 };
