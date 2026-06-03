@@ -83,15 +83,20 @@ async function saveMeal({
   userId: number;
   items: NutritionItem[];
 }) {
+  // todo: non restituisce il name
   const totals = getMealTotals(items);
-
-  await prisma.meal.create({
-    data: {
-      userId,
-      ...totals,
-    },
-  });
-
+  for (const item of items) {
+    await prisma.meal.create({
+      data: {
+        userId,
+        name: item.name,
+        calories: item.calories,
+        protein: item.protein_g,
+        carbs: item.carbohydrates_total_g,
+        fat: item.fat_total_g,
+      },
+    });
+  }
   return totals;
 }
 
