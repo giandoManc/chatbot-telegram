@@ -181,10 +181,11 @@ export async function generateMealJson(prompt: string) {
         "Stima calorie e macronutrienti da descrizioni di pasti in italiano.",
         "Devi restituire sempre e solo JSON valido, senza markdown, testo extra o commenti.",
         "La struttura deve essere sempre identica:",
-        "{\"items\":[{\"name\":\"string\",\"calories\":number,\"protein_g\":number,\"carbohydrates_total_g\":number,\"fat_total_g\":number}]}",
+        '{"items":[{"name":"string","calories":number,"protein_g":number,"carbohydrates_total_g":number,"fat_total_g":number}]}',
         "Non aggiungere campi diversi da quelli indicati.",
         "Usa numeri, non stringhe, per calorie e macronutrienti.",
         "Se ci sono più alimenti, crea un item per ogni alimento.",
+        "nel name va il nome dell'alimento",
         "Se la descrizione è vaga, fai una stima prudente.",
       ].join(" "),
     },
@@ -232,21 +233,26 @@ export async function transcribeAudio(input: {
     return null;
   }
 
-  const response = await fetch("https://openrouter.ai/api/v1/audio/transcriptions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      input_audio: {
-        data: input.data,
-        format: input.format,
+  const response = await fetch(
+    "https://openrouter.ai/api/v1/audio/transcriptions",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
       },
-      model: process.env.OPENROUTER_TRANSCRIPTION_MODEL || "openai/whisper-large-v3",
-      language: input.language || "it",
-    }),
-  });
+      body: JSON.stringify({
+        input_audio: {
+          data: input.data,
+          format: input.format,
+        },
+        model:
+          process.env.OPENROUTER_TRANSCRIPTION_MODEL ||
+          "openai/whisper-large-v3",
+        language: input.language || "it",
+      }),
+    },
+  );
 
   if (!response.ok) {
     return null;
