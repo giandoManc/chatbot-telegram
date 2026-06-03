@@ -52,6 +52,76 @@ const mealNutritionResponseFormat = {
   },
 };
 
+const userCommandResponseFormat = {
+  type: "json_schema",
+  json_schema: {
+    name: "user_command",
+    strict: true,
+    schema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["action", "confidence", "reply", "meal"],
+      properties: {
+        action: {
+          type: "string",
+          enum: ["ADD_MEAL", "ANALYZE_DAY", "UNKNOWN"],
+        },
+        confidence: {
+          type: "number",
+        },
+        reply: {
+          type: "string",
+        },
+        meal: {
+          anyOf: [
+            { type: "null" },
+            {
+              type: "object",
+              additionalProperties: false,
+              required: ["name", "items"],
+              properties: {
+                name: { type: "string" },
+                items: mealNutritionResponseFormat.json_schema.schema.properties.items,
+              },
+            },
+          ],
+        },
+      },
+    },
+  },
+};
+
+export type NutritionItem = {
+  name: string;
+  calories: number;
+  protein_g: number;
+  carbohydrates_total_g: number;
+  fat_total_g: number;
+};
+
+export type AiUserCommand =
+  | {
+      action: "ADD_MEAL";
+      confidence: number;
+      reply: string;
+      meal: {
+        name: string;
+        items: NutritionItem[];
+      };
+    }
+  | {
+      action: "ANALYZE_DAY";
+      confidence: number;
+      reply: string;
+      meal: null;
+    }
+  | {
+      action: "UNKNOWN";
+      confidence: number;
+      reply: string;
+      meal: null;
+    };
+
 export async function generateAiResponse(prompt: string) {
   const apiKey = process.env.OPENROUTER_API_KEY;
 
@@ -222,6 +292,57 @@ export async function generateMealJson(prompt: string) {
   return extractJson(content);
 }
 
+export async function parseUserCommand(message: string): Promise<AiUserCommand> {
+  const messages: ChatMessage[] = [
+    {
+      role: "system",
+      content: [
+        "Sei il router comandi di un bot Telegram nutrizionale.",
+        "Devi capire cosa vuole fare l'utente e restituire solo JSON valido.",
+        "Azioni disponibili:",
+        "ADD_MEAL quando l'utente dice cosa ha mangiato o vuole registrare un pasto.",
+        "ANALYZE_DAY quando l'utente chiede un'analisi, riepilogo, giudizio o consiglio sulla giornata di oggi.",
+        "UNKNOWN quando il messaggio non e' abbastanza chiaro.",
+        "Per ADD_MEAL compila meal.name e meal.items con calorie e macronutrienti stimati.",
+        "Per ANALYZE_DAY e UNKNOWN meal deve essere null.",
+        "La struttura deve essere sempre:",
+        '{"action":"ADD_MEAL|ANALYZE_DAY|UNKNOWN","confidence":number,"reply":"string","meal":null|{"name":"string","items":[{"name":"string","calories":number,"protein_g":number,"carbohydrates_total_g":number,"fat_total_g":number}]}}',
+        "Non aggiungere campi extra, markdown o testo fuori dal JSON.",
+      ].join(" "),
+    },
+    {
+      role: "user",
+      content: message,
+    },
+  ];
+
+  let response = await openRouterChat({
+    messages,
+    temperature: 0.1,
+    responseFormat: userCommandResponseFormat,
+  });
+
+  if (!response.ok && response.status === 400) {
+    response = await openRouterChat({
+      messages,
+      temperature: 0.1,
+    });
+  }
+
+  if (!response.ok) {
+    return unknownCommand();
+  }
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content;
+
+  if (typeof content !== "string") {
+    return unknownCommand();
+  }
+
+  return normalizeUserCommand(extractJson(content));
+}
+
 export async function transcribeAudio(input: {
   data: string;
   format: string;
@@ -314,4 +435,85 @@ function extractJson(content: string) {
       return null;
     }
   }
+}
+
+function normalizeUserCommand(data: unknown): AiUserCommand {
+  if (!data || typeof data !== "object") {
+    return unknownCommand();
+  }
+
+  const value = data as Record<string, unknown>;
+  const confidence =
+    typeof value.confidence === "number" ? value.confidence : 0;
+  const reply = typeof value.reply === "string" ? value.reply : "";
+
+  if (value.action === "ADD_MEAL" && isMealCommandPayload(value.meal)) {
+    return {
+      action: "ADD_MEAL",
+      confidence,
+      reply: reply || "Ho registrato il pasto.",
+      meal: value.meal,
+    };
+  }
+
+  if (value.action === "ANALYZE_DAY") {
+    return {
+      action: "ANALYZE_DAY",
+      confidence,
+      reply: reply || "Analizzo la tua giornata.",
+      meal: null,
+    };
+  }
+
+  return {
+    action: "UNKNOWN",
+    confidence,
+    reply:
+      reply ||
+      "Non ho capito se vuoi aggiungere un pasto o analizzare la giornata.",
+    meal: null,
+  };
+}
+
+function isMealCommandPayload(
+  meal: unknown,
+): meal is { name: string; items: NutritionItem[] } {
+  if (!meal || typeof meal !== "object") {
+    return false;
+  }
+
+  const value = meal as Record<string, unknown>;
+
+  return (
+    typeof value.name === "string" &&
+    Array.isArray(value.items) &&
+    value.items.length > 0 &&
+    value.items.every(isNutritionItem)
+  );
+}
+
+function isNutritionItem(item: unknown): item is NutritionItem {
+  if (!item || typeof item !== "object") {
+    return false;
+  }
+
+  const value = item as Record<string, unknown>;
+
+  return (
+    typeof value.name === "string" &&
+    typeof value.calories === "number" &&
+    typeof value.protein_g === "number" &&
+    typeof value.carbohydrates_total_g === "number" &&
+    typeof value.fat_total_g === "number"
+  );
+}
+
+function unknownCommand(): AiUserCommand {
+  return {
+    action: "UNKNOWN",
+    confidence: 0,
+    reply:
+      "Non ho capito se vuoi aggiungere un pasto o analizzare la giornata. Puoi scrivermi, ad esempio: \"ho mangiato pasta e pollo\" oppure \"analizza oggi\".",
+    meal: null,
+  };
 }
