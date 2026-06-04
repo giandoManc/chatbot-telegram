@@ -137,7 +137,6 @@ function buildDailyPrompt({
     `${totals.carbs.toFixed(1)}g carboidrati`,
     `${totals.fat.toFixed(1)}g grassi`,
     "",
-    "Restituisci: 1 valutazione generale, 2 cose positive, 2 consigli pratici per il resto della giornata.",
     "Massimo 8 righe.",
   ].join("\n");
 }

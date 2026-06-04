@@ -8,18 +8,10 @@ import { transcribeTelegramVoice } from "../utils/transcribeTelegramVoice";
 
 export function registerMealsHandler(bot: Telegraf<BotContext>) {
   bot.on("text", async (ctx) => {
-    if (!ctx.state.user) {
-      return ctx.reply("Completa prima il profilo con /start.");
-    }
-
     return handleUserMessage(ctx, ctx.message.text);
   });
 
   bot.on("voice", async (ctx) => {
-    if (!ctx.state.user) {
-      return ctx.reply("Completa prima il profilo con /start.");
-    }
-
     await ctx.sendChatAction("typing");
 
     const fileUrl = await ctx.telegram.getFileLink(ctx.message.voice.file_id);
@@ -45,10 +37,6 @@ async function handleUserMessage(
   },
 ) {
   const user = ctx.state.user;
-
-  if (!user) {
-    return ctx.reply("Completa prima il profilo con /start.");
-  }
 
   const command = await parseUserCommand(message);
 

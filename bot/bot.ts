@@ -1,18 +1,21 @@
 import { Telegraf } from "telegraf";
 
-import { registerDailyHandler } from "./handlers/daily";
 import { registerMealsHandler } from "./handlers/meals";
 import { registerOnboardingHandler } from "./handlers/onboarding";
 import { registerProfileHandlers } from "./handlers/profile";
 import { registerStartHandler } from "./handlers/start";
-import { loadUser, type BotContext } from "./middleware/loadUser";
+import {
+  checkUserProfile,
+  loadUser,
+  type BotContext,
+} from "./middleware/loadUser";
 
 export const bot = new Telegraf<BotContext>(process.env.TELEGRAM_BOT_TOKEN!);
 
 bot.use(loadUser);
+bot.use(checkUserProfile);
 
 registerStartHandler(bot);
 registerProfileHandlers(bot);
-registerDailyHandler(bot);
 registerOnboardingHandler(bot);
 registerMealsHandler(bot);

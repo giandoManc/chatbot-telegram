@@ -24,3 +24,13 @@ export const loadUser: MiddlewareFn<BotContext> = async (ctx, next) => {
 
   return next();
 };
+
+export const checkUserProfile = (
+  ctx: BotContext,
+  next: () => Promise<void>,
+) => {
+  if (!ctx.state.user) {
+    ctx.reply("Completa prima il profilo con /start.");
+  }
+  return next();
+};
