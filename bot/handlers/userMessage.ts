@@ -17,6 +17,7 @@ export function registerUserMessageHandler(bot: Telegraf<BotContext>) {
 
     const fileUrl = await ctx.telegram.getFileLink(ctx.message.voice.file_id);
     const transcription = await transcribeTelegramVoice(fileUrl);
+    await deleteTelegramMessage(ctx, ctx.message.message_id);
 
     if (!transcription) {
       return ctx.reply(
@@ -28,6 +29,16 @@ export function registerUserMessageHandler(bot: Telegraf<BotContext>) {
       transcription,
     });
   });
+}
+
+async function deleteTelegramMessage(ctx: BotContext, messageId: number) {
+  if (!ctx.chat) {
+    return;
+  }
+
+  try {
+    await ctx.telegram.deleteMessage(ctx.chat.id, messageId);
+  } catch {}
 }
 
 async function handleUserMessage(
