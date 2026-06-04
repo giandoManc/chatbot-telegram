@@ -48,9 +48,9 @@ export function getMealTotals(items: NutritionItem[]): MealTotals {
 export function formatMealTotals(totals: MealTotals) {
   return [
     "Analisi pasto:",
-    `Calorie: ${Math.round(totals.calories)} kcal`,
-    `Proteine: ${totals.protein.toFixed(1)} g`,
-    `Carboidrati: ${totals.carbs.toFixed(1)} g`,
-    `Grassi: ${totals.fat.toFixed(1)} g`,
+    `⚡: ${Math.round(totals.calories)} kcal`,
+    `💪: ${totals.protein.toFixed(1)} g`,
+    `🍞: ${totals.carbs.toFixed(1)} g`,
+    `🧈: ${totals.fat.toFixed(1)} g`,
   ].join("\n");
 }

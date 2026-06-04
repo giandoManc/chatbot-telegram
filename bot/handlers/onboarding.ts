@@ -62,11 +62,15 @@ export function registerOnboardingHandler(bot: Telegraf<BotContext>) {
     const message = ctx.message.text;
 
     if (!telegramId) {
-      return ctx.reply("Non riesco a leggere il tuo profilo Telegram. Riprova.");
+      return ctx.reply(
+        "Non riesco a leggere il tuo profilo Telegram. Riprova.",
+      );
     }
 
     if (!ctx.from) {
-      return ctx.reply("Non riesco a leggere il tuo profilo Telegram. Riprova.");
+      return ctx.reply(
+        "Non riesco a leggere il tuo profilo Telegram. Riprova.",
+      );
     }
 
     let user = ctx.state.user;
@@ -164,7 +168,7 @@ async function getOnboardingReply({
       },
     });
 
-    return "Perfetto ✅ Profilo creato. Ora scrivimi cosa hai mangiato oggi.";
+    return "Perfetto ✅ Profilo creato.";
   }
 
   await resetOnboardingUser({ telegramId });

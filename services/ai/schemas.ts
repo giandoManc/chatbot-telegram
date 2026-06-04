@@ -36,7 +36,7 @@ export const userCommandResponseFormat: CompletionCreateParams.ResponseFormatJso
       properties: {
         action: {
           type: "string",
-          enum: ["ADD_MEAL", "ANALYZE_DAY", "UNKNOWN"],
+          enum: ["ADD_MEAL", "ANALYZE_DAY", "FOOD_ADVICE", "UNKNOWN"],
         },
         confidence: {
           type: "number",

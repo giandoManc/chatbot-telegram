@@ -1,12 +1,13 @@
 import type { Telegraf } from "telegraf";
 
-import { parseUserCommand } from "@/services/ai";
+import { parseUserCommand, type AiUserCommand } from "@/services/ai";
+import { analyzeFoodAdvice } from "@/services/daily-analysis.service";
 import { formatMealTotals, saveMealItems } from "@/services/meals";
 import type { BotContext } from "../middleware/loadUser";
 import { replyWithTodayAnalysis } from "../utils/replyWithTodayAnalysis";
 import { transcribeTelegramVoice } from "../utils/transcribeTelegramVoice";
 
-export function registerMealsHandler(bot: Telegraf<BotContext>) {
+export function registerUserMessageHandler(bot: Telegraf<BotContext>) {
   bot.on("text", async (ctx) => {
     return handleUserMessage(ctx, ctx.message.text);
   });
@@ -19,7 +20,7 @@ export function registerMealsHandler(bot: Telegraf<BotContext>) {
 
     if (!transcription) {
       return ctx.reply(
-        "Non sono riuscito a trascrivere il vocale. Prova a scrivere il pasto.",
+        "Non sono riuscito a trascrivere il vocale. Prova a scrivere.",
       );
     }
 
@@ -38,24 +39,62 @@ async function handleUserMessage(
 ) {
   const user = ctx.state.user!;
 
-  const command = await parseUserCommand(message);
+  const command: AiUserCommand = await parseUserCommand(message);
 
   if (command.confidence < 0.45 || command.action === "UNKNOWN") {
     return ctx.reply(command.reply);
   }
 
-  if (command.action === "ANALYZE_DAY") {
-    return replyWithTodayAnalysis(ctx, user);
-  }
+  switch (command.action) {
+    case "ANALYZE_DAY":
+      return replyWithTodayAnalysis(ctx, user);
 
+    case "FOOD_ADVICE":
+      return replyWithFoodAdvice({ ctx, user, message });
+
+    case "ADD_MEAL":
+      return replyWithSavedMeal({
+        ctx,
+        command,
+        transcription: options?.transcription,
+        userId: user.id,
+      });
+  }
+}
+
+async function replyWithFoodAdvice({
+  ctx,
+  user,
+  message,
+}: {
+  ctx: BotContext;
+  user: NonNullable<BotContext["state"]["user"]>;
+  message: string;
+}) {
+  const aiMessage = await analyzeFoodAdvice(user, message);
+
+  return ctx.reply(aiMessage);
+}
+
+async function replyWithSavedMeal({
+  ctx,
+  command,
+  transcription,
+  userId,
+}: {
+  ctx: BotContext;
+  command: Extract<AiUserCommand, { action: "ADD_MEAL" }>;
+  transcription?: string;
+  userId: number;
+}) {
   const totals = await saveMealItems({
-    userId: user.id,
+    userId,
     items: command.meal.items,
   });
 
   return ctx.reply(
     [
-      options?.transcription ? `Ho capito: "${options.transcription}"` : null,
+      transcription ? `Ho capito: "${transcription}"` : null,
       command.reply,
       "",
       formatMealTotals(totals),

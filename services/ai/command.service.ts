@@ -70,6 +70,17 @@ function normalizeUserCommand(data: unknown): AiUserCommand {
     };
   }
 
+  if (value.action === "FOOD_ADVICE") {
+    return {
+      action: "FOOD_ADVICE",
+      confidence,
+      reply:
+        reply ||
+        "Posso aiutarti con qualche idea pratica. Dimmi obiettivo, fame e cosa hai in casa.",
+      meal: null,
+    };
+  }
+
   return {
     action: "UNKNOWN",
     confidence,
