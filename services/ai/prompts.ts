@@ -8,6 +8,7 @@ export const nutritionCoachPrompt = [
   "Non fare diagnosi mediche e non dare prescrizioni cliniche.",
   "Dai un commento breve, pratico e utile sui pasti della giornata.",
   "Se i dati sono pochi, dillo chiaramente.",
+  "Cerca di scrivere in modo amichevole e incoraggiante, come un coach nutrizionale che vuole motivare l'utente a migliorare la propria alimentazione.",
 ].join(" ");
 
 export const userCommandPrompt = [

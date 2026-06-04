@@ -1,6 +1,7 @@
 import type { Telegraf } from "telegraf";
 
-import { AiUserCommand, parseUserCommand } from "@/services/ai";
+import { parseUserCommand, type AiUserCommand } from "@/services/ai";
+import { analyzeFoodAdvice } from "@/services/daily-analysis.service";
 import { formatMealTotals, saveMealItems } from "@/services/meals";
 import type { BotContext } from "../middleware/loadUser";
 import { replyWithTodayAnalysis } from "../utils/replyWithTodayAnalysis";
@@ -43,31 +44,62 @@ async function handleUserMessage(
   if (command.confidence < 0.45 || command.action === "UNKNOWN") {
     return ctx.reply(command.reply);
   }
+
   switch (command.action) {
     case "ANALYZE_DAY":
       return replyWithTodayAnalysis(ctx, user);
-      break;
-    case "FOOD_ADVICE":
-      return ctx.reply(command.reply);
-      break;
-    case "ADD_MEAL":
-      const totals = await saveMealItems({
-        userId: user.id,
-        items: command.meal.items,
-      });
 
-      return ctx.reply(
-        [
-          options?.transcription
-            ? `Ho capito: "${options.transcription}"`
-            : null,
-          command.reply,
-          "",
-          formatMealTotals(totals),
-        ]
-          .filter(Boolean)
-          .join("\n"),
-      );
-      break;
+    case "FOOD_ADVICE":
+      return replyWithFoodAdvice({ ctx, user, message });
+
+    case "ADD_MEAL":
+      return replyWithSavedMeal({
+        ctx,
+        command,
+        transcription: options?.transcription,
+        userId: user.id,
+      });
   }
+}
+
+async function replyWithFoodAdvice({
+  ctx,
+  user,
+  message,
+}: {
+  ctx: BotContext;
+  user: NonNullable<BotContext["state"]["user"]>;
+  message: string;
+}) {
+  const aiMessage = await analyzeFoodAdvice(user, message);
+
+  return ctx.reply(aiMessage);
+}
+
+async function replyWithSavedMeal({
+  ctx,
+  command,
+  transcription,
+  userId,
+}: {
+  ctx: BotContext;
+  command: Extract<AiUserCommand, { action: "ADD_MEAL" }>;
+  transcription?: string;
+  userId: number;
+}) {
+  const totals = await saveMealItems({
+    userId,
+    items: command.meal.items,
+  });
+
+  return ctx.reply(
+    [
+      transcription ? `Ho capito: "${transcription}"` : null,
+      command.reply,
+      "",
+      formatMealTotals(totals),
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  );
 }
