@@ -36,7 +36,7 @@ async function handleUserMessage(
     transcription?: string;
   },
 ) {
-  const user = ctx.state.user;
+  const user = ctx.state.user!;
 
   const command = await parseUserCommand(message);
 
