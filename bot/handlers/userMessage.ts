@@ -47,6 +47,9 @@ async function handleUserMessage(
     case "ANALYZE_DAY":
       return replyWithTodayAnalysis(ctx, user);
       break;
+    case "FOOD_ADVICE":
+      return ctx.reply(command.reply);
+      break;
     case "ADD_MEAL":
       const totals = await saveMealItems({
         userId: user.id,

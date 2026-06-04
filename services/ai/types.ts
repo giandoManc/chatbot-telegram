@@ -34,6 +34,12 @@ export type AiUserCommand =
       confidence: number;
       reply: string;
       meal: null;
+    }
+  | {
+      action: "FOOD_ADVICE";
+      confidence: number;
+      reply: string;
+      meal: null;
     };
 
 export type AiChatOptions = {
