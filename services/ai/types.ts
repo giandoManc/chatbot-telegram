@@ -5,6 +5,11 @@ export type ChatMessage = {
   content: string;
 };
 
+export type ConversationMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
 export type NutritionItem = {
   name: string;
   calories: number;

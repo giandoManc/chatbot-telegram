@@ -4,6 +4,7 @@ import { getStartOfToday } from "@/lib/date";
 import { prisma } from "@/lib/prisma";
 
 import { generateAiResponse, streamAiResponse } from "@/services/ai";
+import type { ConversationMessage } from "@/services/ai";
 import {
   buildDailyPrompt,
   buildFoodAdvicePrompt,
@@ -100,10 +101,20 @@ function getDailyTotals(meals: Meal[]): DailyTotals {
   );
 }
 
-export async function analyzeFoodAdvice(user: User, message: string) {
+export async function analyzeFoodAdvice(
+  user: User,
+  message: string,
+  recentMessages: ConversationMessage[] = [],
+) {
   const meals = await getTodayMeals(user.id);
   const totals = getDailyTotals(meals);
-  const prompt = buildFoodAdvicePrompt({ user, meals, totals, message });
+  const prompt = buildFoodAdvicePrompt({
+    user,
+    meals,
+    totals,
+    message,
+    recentMessages,
+  });
 
   const aiComment = await generateAiResponse(prompt);
 

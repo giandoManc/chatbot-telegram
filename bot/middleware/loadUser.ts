@@ -2,8 +2,10 @@ import type { User } from "@prisma/client";
 import type { Context, MiddlewareFn } from "telegraf";
 
 import { prisma } from "@/lib/prisma";
+import type { BotSession } from "../session/advice-session";
 
 export type BotContext = Context & {
+  session?: BotSession;
   state: {
     telegramId?: string;
     user?: User | null;

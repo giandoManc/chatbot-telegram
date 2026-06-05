@@ -5,6 +5,10 @@ import { analyzeFoodAdvice } from "@/services/daily-analysis.service";
 import { formatMealTotals, saveMealItems } from "@/services/meals";
 import { replyWithDeleteLastMealConfirmation } from "./meal";
 import type { BotContext } from "../middleware/loadUser";
+import {
+  addRecentAdviceMessage,
+  getRecentAdviceMessages,
+} from "../session/advice-session";
 import { replyWithTodayAnalysis } from "../utils/replyWithTodayAnalysis";
 import { transcribeTelegramVoice } from "../utils/transcribeTelegramVoice";
 
@@ -86,7 +90,20 @@ async function replyWithFoodAdvice({
   user: NonNullable<BotContext["state"]["user"]>;
   message: string;
 }) {
-  const aiMessage = await analyzeFoodAdvice(user, message);
+  const aiMessage = await analyzeFoodAdvice(
+    user,
+    message,
+    getRecentAdviceMessages(ctx),
+  );
+
+  addRecentAdviceMessage(ctx, {
+    role: "user",
+    content: message,
+  });
+  addRecentAdviceMessage(ctx, {
+    role: "assistant",
+    content: aiMessage,
+  });
 
   return ctx.reply(aiMessage);
 }

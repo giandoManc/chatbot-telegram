@@ -1,4 +1,4 @@
-import { Telegraf } from "telegraf";
+import { session, Telegraf } from "telegraf";
 
 import { registerMealHandler } from "./handlers/meal";
 import { registerOnboardingHandler } from "./handlers/onboarding";
@@ -10,9 +10,11 @@ import {
   loadUser,
   type BotContext,
 } from "./middleware/loadUser";
+import { createDefaultSession } from "./session/advice-session";
 
 export const bot = new Telegraf<BotContext>(process.env.TELEGRAM_BOT_TOKEN!);
 
+bot.use(session({ defaultSession: createDefaultSession }));
 bot.use(loadUser);
 bot.use(checkUserProfile);
 

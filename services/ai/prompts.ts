@@ -1,4 +1,5 @@
 import type { Meal, User } from "@prisma/client";
+import type { ConversationMessage } from "./types";
 
 type DailyTotals = {
   calories: number;
@@ -103,14 +104,27 @@ export function buildFoodAdvicePrompt({
   meals,
   totals,
   message,
+  recentMessages = [],
 }: {
   user: User;
   meals: Meal[];
   totals: DailyTotals;
   message: string;
+  recentMessages?: ConversationMessage[];
 }) {
   const mealLines =
     meals.length > 0 ? formatMealLines(meals) : "Nessun pasto registrato oggi.";
+  const conversationLines =
+    recentMessages.length > 0
+      ? recentMessages
+          .map((recentMessage) => {
+            const role =
+              recentMessage.role === "user" ? "Utente" : "Assistente";
+
+            return `${role}: ${recentMessage.content}`;
+          })
+          .join("\n")
+      : "Nessun contesto recente.";
 
   return [
     "Rispondi come coach nutrizionale italiano a una richiesta di consiglio alimentare.",
@@ -138,6 +152,9 @@ export function buildFoodAdvicePrompt({
     `${totals.protein.toFixed(1)}g proteine`,
     `${totals.carbs.toFixed(1)}g carboidrati`,
     `${totals.fat.toFixed(1)}g grassi`,
+    "",
+    "Contesto recente della conversazione:",
+    conversationLines,
     "",
     "Domanda utente:",
     message,
