@@ -80,9 +80,17 @@ export function registerOnboardingHandler(bot: Telegraf<BotContext>) {
         telegramId,
         username: ctx.from.username,
         firstName: ctx.from.first_name,
-      });
+    });
 
-      return ctx.reply("Ciao 👋 Prima di iniziare, quanti anni hai?");
+      return ctx.reply(
+        [
+          "Ciao 👋 Sono il tuo assistente nutrizionale.",
+          "",
+          "Mi mandi cosa mangi e io stimo calorie e macro.",
+          "",
+          "Prima creo il profilo. Quanti anni hai?",
+        ].join("\n"),
+      );
     }
 
     if (user.onboardingCompleted) {
@@ -168,7 +176,11 @@ async function getOnboardingReply({
       },
     });
 
-    return "Perfetto ✅ Profilo creato.";
+    return [
+      "Perfetto ✅ Profilo creato.",
+      "",
+      "Ora mandami un pasto, anche vocale, oppure scrivi \"analizza la giornata\".",
+    ].join("\n");
   }
 
   await resetOnboardingUser({ telegramId });

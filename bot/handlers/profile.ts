@@ -21,6 +21,12 @@ export function registerProfileHandlers(bot: Telegraf<BotContext>) {
       firstName: ctx.from.first_name,
     });
 
-    return ctx.reply("Profilo resettato. Quanti anni hai?");
+    return ctx.reply(
+      [
+        "Profilo resettato.",
+        "",
+        "Rispondi a poche domande per personalizzare calorie e consigli. Quanti anni hai?",
+      ].join("\n"),
+    );
   });
 }
