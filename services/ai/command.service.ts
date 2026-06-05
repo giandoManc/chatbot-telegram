@@ -1,8 +1,9 @@
 import { extractJson } from "./json";
 import { groqChat } from "./groq.client";
 import { userCommandPrompt } from "./prompts";
-import { userCommandResponseFormat } from "./schemas";
-import type { AiUserCommand, ChatMessage, NutritionItem } from "./types";
+import { userIntentResponseFormat } from "./schemas";
+import { parseMeal } from "./meal-parser.service";
+import type { AiUserCommand, ChatMessage } from "./types";
 
 export async function parseUserCommand(message: string): Promise<AiUserCommand> {
   const messages: ChatMessage[] = [
@@ -19,7 +20,7 @@ export async function parseUserCommand(message: string): Promise<AiUserCommand> 
   let response = await groqChat({
     messages,
     temperature: 0.1,
-    responseFormat: userCommandResponseFormat,
+    responseFormat: userIntentResponseFormat,
   });
 
   if (!response) {
@@ -39,10 +40,13 @@ export async function parseUserCommand(message: string): Promise<AiUserCommand> 
     return unknownCommand();
   }
 
-  return normalizeUserCommand(extractJson(content));
+  return normalizeUserCommand(extractJson(content), message);
 }
 
-function normalizeUserCommand(data: unknown): AiUserCommand {
+async function normalizeUserCommand(
+  data: unknown,
+  message: string,
+): Promise<AiUserCommand> {
   if (!data || typeof data !== "object") {
     return unknownCommand();
   }
@@ -52,12 +56,24 @@ function normalizeUserCommand(data: unknown): AiUserCommand {
     typeof value.confidence === "number" ? value.confidence : 0;
   const reply = typeof value.reply === "string" ? value.reply : "";
 
-  if (value.action === "ADD_MEAL" && isMealCommandPayload(value.meal)) {
+  if (value.action === "ADD_MEAL") {
+    const meal = await parseMeal(message);
+
+    if (!meal) {
+      return {
+        action: "UNKNOWN",
+        confidence: 0.35,
+        reply:
+          "Non sono riuscito a stimare bene il pasto. Puoi indicarmi alimenti e quantità?",
+        meal: null,
+      };
+    }
+
     return {
       action: "ADD_MEAL",
       confidence,
-      reply: reply || "Ho registrato il pasto.",
-      meal: value.meal,
+      reply: meal.reply || reply || "Ho registrato il pasto.",
+      meal,
     };
   }
 
@@ -98,39 +114,6 @@ function normalizeUserCommand(data: unknown): AiUserCommand {
       "Non ho capito se vuoi aggiungere un pasto o analizzare la giornata.",
     meal: null,
   };
-}
-
-function isMealCommandPayload(
-  meal: unknown,
-): meal is { name: string; items: NutritionItem[] } {
-  if (!meal || typeof meal !== "object") {
-    return false;
-  }
-
-  const value = meal as Record<string, unknown>;
-
-  return (
-    typeof value.name === "string" &&
-    Array.isArray(value.items) &&
-    value.items.length > 0 &&
-    value.items.every(isNutritionItem)
-  );
-}
-
-function isNutritionItem(item: unknown): item is NutritionItem {
-  if (!item || typeof item !== "object") {
-    return false;
-  }
-
-  const value = item as Record<string, unknown>;
-
-  return (
-    typeof value.name === "string" &&
-    typeof value.calories === "number" &&
-    typeof value.protein_g === "number" &&
-    typeof value.carbohydrates_total_g === "number" &&
-    typeof value.fat_total_g === "number"
-  );
 }
 
 function unknownCommand(): AiUserCommand {

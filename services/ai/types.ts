@@ -13,40 +13,29 @@ export type NutritionItem = {
   fat_total_g: number;
 };
 
+export type ParsedMeal = {
+  name: string;
+  items: NutritionItem[];
+  reply: string;
+};
+
+type AiUserCommandBase = {
+  confidence: number;
+  reply: string;
+  meal: null;
+};
+
 export type AiUserCommand =
   | {
       action: "ADD_MEAL";
       confidence: number;
       reply: string;
-      meal: {
-        name: string;
-        items: NutritionItem[];
-      };
+      meal: ParsedMeal;
     }
-  | {
-      action: "ANALYZE_DAY";
-      confidence: number;
-      reply: string;
-      meal: null;
-    }
-  | {
-      action: "UNKNOWN";
-      confidence: number;
-      reply: string;
-      meal: null;
-    }
-  | {
-      action: "FOOD_ADVICE";
-      confidence: number;
-      reply: string;
-      meal: null;
-    }
-  | {
-      action: "DELETE_LAST_MEAL";
-      confidence: number;
-      reply: string;
-      meal: null;
-    };
+  | (AiUserCommandBase & { action: "ANALYZE_DAY" })
+  | (AiUserCommandBase & { action: "UNKNOWN" })
+  | (AiUserCommandBase & { action: "FOOD_ADVICE" })
+  | (AiUserCommandBase & { action: "DELETE_LAST_MEAL" });
 
 export type AiChatOptions = {
   messages: ChatMessage[];

@@ -4,6 +4,10 @@ import { getStartOfToday } from "@/lib/date";
 import { prisma } from "@/lib/prisma";
 
 import { generateAiResponse, streamAiResponse } from "@/services/ai";
+import {
+  buildDailyPrompt,
+  buildFoodAdvicePrompt,
+} from "@/services/ai/prompts";
 
 type DailyTotals = {
   calories: number;
@@ -96,49 +100,6 @@ function getDailyTotals(meals: Meal[]): DailyTotals {
   );
 }
 
-function buildDailyPrompt({
-  user,
-  meals,
-  totals,
-}: {
-  user: User;
-  meals: Meal[];
-  totals: DailyTotals;
-}) {
-  const mealLines = meals
-    .map((meal) => {
-      return [
-        `- ${meal.name || "Pasto senza nome"}`,
-        `${Math.round(meal.calories || 0)} kcal`,
-        `${(meal.protein || 0).toFixed(1)}g proteine`,
-        `${(meal.carbs || 0).toFixed(1)}g carboidrati`,
-        `${(meal.fat || 0).toFixed(1)}g grassi`,
-      ].join(", ");
-    })
-    .join("\n");
-
-  return [
-    "Analizza questa giornata alimentare.",
-    "",
-    "Profilo utente:",
-    `Età: ${user.age ?? "non indicata"}`,
-    `Altezza: ${user.height ?? "non indicata"} cm`,
-    `Peso: ${user.weight ?? "non indicato"} kg`,
-    `Obiettivo: ${user.goal ?? "non indicato"}`,
-    "",
-    "Pasti registrati oggi:",
-    mealLines,
-    "",
-    "Totali:",
-    `${Math.round(totals.calories)} kcal`,
-    `${totals.protein.toFixed(1)}g proteine`,
-    `${totals.carbs.toFixed(1)}g carboidrati`,
-    `${totals.fat.toFixed(1)}g grassi`,
-    "",
-    "Massimo 8 righe.",
-  ].join("\n");
-}
-
 export async function analyzeFoodAdvice(user: User, message: string) {
   const meals = await getTodayMeals(user.id);
   const totals = getDailyTotals(meals);
@@ -147,62 +108,4 @@ export async function analyzeFoodAdvice(user: User, message: string) {
   const aiComment = await generateAiResponse(prompt);
 
   return aiComment;
-}
-
-function buildFoodAdvicePrompt({
-  user,
-  meals,
-  totals,
-  message,
-}: {
-  user: User;
-  meals: Meal[];
-  totals: DailyTotals;
-  message: string;
-}) {
-  const mealLines =
-    meals.length > 0
-      ? meals
-          .map((meal) => {
-            return [
-              `- ${meal.name || "Pasto senza nome"}`,
-              `${Math.round(meal.calories || 0)} kcal`,
-              `${(meal.protein || 0).toFixed(1)}g proteine`,
-              `${(meal.carbs || 0).toFixed(1)}g carboidrati`,
-              `${(meal.fat || 0).toFixed(1)}g grassi`,
-            ].join(", ");
-          })
-          .join("\n")
-      : "Nessun pasto registrato oggi.";
-
-  return [
-    "Rispondi come coach nutrizionale italiano a una richiesta di consiglio alimentare.",
-    "La risposta deve essere breve, carina e pratica, adatta a Telegram.",
-    "Non fare diagnosi mediche e non dare prescrizioni cliniche.",
-    "",
-    "Regole di stile:",
-    "- massimo 5 righe totali",
-    "- usa 2 o 3 emoji pertinenti",
-    "- niente introduzioni lunghe",
-    "- proponi 2 o 3 idee concrete di piatti o alimenti",
-    "- se utile, indica una nota breve su proteine/carboidrati/grassi",
-    "",
-    "Profilo utente:",
-    `Età: ${user.age ?? "non indicata"}`,
-    `Altezza: ${user.height ?? "non indicata"} cm`,
-    `Peso: ${user.weight ?? "non indicato"} kg`,
-    `Obiettivo: ${user.goal ?? "non indicato"}`,
-    "",
-    "Pasti registrati oggi:",
-    mealLines,
-    "",
-    "Totali di oggi:",
-    `${Math.round(totals.calories)} kcal`,
-    `${totals.protein.toFixed(1)}g proteine`,
-    `${totals.carbs.toFixed(1)}g carboidrati`,
-    `${totals.fat.toFixed(1)}g grassi`,
-    "",
-    "Domanda utente:",
-    message,
-  ].join("\n");
 }

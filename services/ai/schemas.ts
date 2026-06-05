@@ -24,15 +24,15 @@ export const nutritionItemsSchema = {
   items: nutritionItemSchema,
 };
 
-export const userCommandResponseFormat: CompletionCreateParams.ResponseFormatJsonSchema = {
+export const userIntentResponseFormat: CompletionCreateParams.ResponseFormatJsonSchema = {
   type: "json_schema",
   json_schema: {
-    name: "user_command",
+    name: "user_intent",
     strict: true,
     schema: {
       type: "object",
       additionalProperties: false,
-      required: ["action", "confidence", "reply", "meal"],
+      required: ["action", "confidence", "reply"],
       properties: {
         action: {
           type: "string",
@@ -50,20 +50,24 @@ export const userCommandResponseFormat: CompletionCreateParams.ResponseFormatJso
         reply: {
           type: "string",
         },
-        meal: {
-          anyOf: [
-            { type: "null" },
-            {
-              type: "object",
-              additionalProperties: false,
-              required: ["name", "items"],
-              properties: {
-                name: { type: "string" },
-                items: nutritionItemsSchema,
-              },
-            },
-          ],
-        },
+      },
+    },
+  },
+};
+
+export const mealParserResponseFormat: CompletionCreateParams.ResponseFormatJsonSchema = {
+  type: "json_schema",
+  json_schema: {
+    name: "parsed_meal",
+    strict: true,
+    schema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["name", "items", "reply"],
+      properties: {
+        name: { type: "string" },
+        items: nutritionItemsSchema,
+        reply: { type: "string" },
       },
     },
   },
