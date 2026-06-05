@@ -1,5 +1,7 @@
 export {
+  deleteMeal,
   formatMealTotals,
+  getLastMeal,
   getMealTotals,
   saveMealItems,
 } from "./meal-record.service";

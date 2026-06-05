@@ -54,3 +54,20 @@ export function formatMealTotals(totals: MealTotals) {
     `🧈: ${totals.fat.toFixed(1)} g`,
   ].join("\n");
 }
+
+export async function getLastMeal(userId: number) {
+  const lastMeal = await prisma.meal.findFirst({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return lastMeal;
+}
+
+export async function deleteMeal(userId: number, mealId: number) {
+  const deleted = await prisma.meal.deleteMany({
+    where: { id: mealId, userId },
+  });
+
+  return deleted.count > 0;
+}

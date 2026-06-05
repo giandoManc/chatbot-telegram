@@ -30,7 +30,7 @@ export const checkUserProfile = (
   next: () => Promise<void>,
 ) => {
   if (!ctx.state.user) {
-    ctx.reply("Completa prima il profilo con /start.");
+    return ctx.reply("Completa prima il profilo con /start.");
   }
   return next();
 };
