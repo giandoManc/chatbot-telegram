@@ -5,22 +5,7 @@ import type { BotContext } from "../middleware/loadUser";
 
 export function registerMealHandler(bot: Telegraf<BotContext>) {
   bot.command("delete_last", async (ctx) => {
-    const user = ctx.state.user!;
-    const lastMeal = await getLastMeal(user.id);
-
-    if (!lastMeal) {
-      return ctx.reply("Non ho trovato un pasto di oggi da cancellare.");
-    }
-    ctx.reply(`Sei sicuro di voler cancellare il pasto "${lastMeal.name}"?`, {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            { text: "Conferma", callback_data: `delete_last:${lastMeal.id}` },
-            { text: "Annulla", callback_data: "cancel_delete" },
-          ],
-        ],
-      },
-    });
+    return replyWithDeleteLastMealConfirmation(ctx, ctx.state.user!.id);
   });
 
   bot.action(/delete_last:(\d+)/, async (ctx) => {
@@ -38,4 +23,29 @@ export function registerMealHandler(bot: Telegraf<BotContext>) {
   bot.action(/cancel_delete/, async (ctx) => {
     await ctx.deleteMessage();
   });
+}
+
+export async function replyWithDeleteLastMealConfirmation(
+  ctx: BotContext,
+  userId: number,
+) {
+  const lastMeal = await getLastMeal(userId);
+
+  if (!lastMeal) {
+    return ctx.reply("Non ho trovato un pasto di oggi da cancellare.");
+  }
+
+  return ctx.reply(
+    `Sei sicuro di voler cancellare il pasto "${lastMeal.name}"?`,
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: "Conferma", callback_data: `delete_last:${lastMeal.id}` },
+            { text: "Annulla", callback_data: "cancel_delete" },
+          ],
+        ],
+      },
+    },
+  );
 }

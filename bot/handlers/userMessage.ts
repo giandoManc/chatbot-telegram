@@ -3,6 +3,7 @@ import type { Telegraf } from "telegraf";
 import { parseUserCommand, type AiUserCommand } from "@/services/ai";
 import { analyzeFoodAdvice } from "@/services/daily-analysis.service";
 import { formatMealTotals, saveMealItems } from "@/services/meals";
+import { replyWithDeleteLastMealConfirmation } from "./meal";
 import type { BotContext } from "../middleware/loadUser";
 import { replyWithTodayAnalysis } from "../utils/replyWithTodayAnalysis";
 import { transcribeTelegramVoice } from "../utils/transcribeTelegramVoice";
@@ -70,6 +71,9 @@ async function handleUserMessage(
         transcription: options?.transcription,
         userId: user.id,
       });
+
+    case "DELETE_LAST_MEAL":
+      return replyWithDeleteLastMealConfirmation(ctx, user.id);
   }
 }
 

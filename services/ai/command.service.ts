@@ -81,6 +81,15 @@ function normalizeUserCommand(data: unknown): AiUserCommand {
     };
   }
 
+  if (value.action === "DELETE_LAST_MEAL") {
+    return {
+      action: "DELETE_LAST_MEAL",
+      confidence,
+      reply: reply || "Ti chiedo conferma prima di cancellare.",
+      meal: null,
+    };
+  }
+
   return {
     action: "UNKNOWN",
     confidence,

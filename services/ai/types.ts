@@ -40,6 +40,12 @@ export type AiUserCommand =
       confidence: number;
       reply: string;
       meal: null;
+    }
+  | {
+      action: "DELETE_LAST_MEAL";
+      confidence: number;
+      reply: string;
+      meal: null;
     };
 
 export type AiChatOptions = {
