@@ -1,5 +1,6 @@
 import type { Meal, User } from "@prisma/client";
 
+import { getStartOfToday } from "@/lib/date";
 import { prisma } from "@/lib/prisma";
 
 import { generateAiResponse, streamAiResponse } from "@/services/ai";
@@ -70,14 +71,11 @@ async function getTodayAnalysisContext(user: User) {
 }
 
 async function getTodayMeals(userId: number) {
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-
   return prisma.meal.findMany({
     where: {
       userId,
       createdAt: {
-        gte: startOfToday,
+        gte: getStartOfToday(),
       },
     },
     orderBy: {

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getStartOfToday } from "@/lib/date";
 import type { NutritionItem } from "@/services/ai";
 
 export type MealTotals = {
@@ -57,7 +58,12 @@ export function formatMealTotals(totals: MealTotals) {
 
 export async function getLastMeal(userId: number) {
   const lastMeal = await prisma.meal.findFirst({
-    where: { userId },
+    where: {
+      userId,
+      createdAt: {
+        gte: getStartOfToday(),
+      },
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -66,7 +72,13 @@ export async function getLastMeal(userId: number) {
 
 export async function deleteMeal(userId: number, mealId: number) {
   const deleted = await prisma.meal.deleteMany({
-    where: { id: mealId, userId },
+    where: {
+      id: mealId,
+      userId,
+      createdAt: {
+        gte: getStartOfToday(),
+      },
+    },
   });
 
   return deleted.count > 0;

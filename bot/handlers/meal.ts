@@ -9,7 +9,7 @@ export function registerMealHandler(bot: Telegraf<BotContext>) {
     const lastMeal = await getLastMeal(user.id);
 
     if (!lastMeal) {
-      return ctx.reply("Non ho trovato un pasto da cancellare.");
+      return ctx.reply("Non ho trovato un pasto di oggi da cancellare.");
     }
     ctx.reply(`Sei sicuro di voler cancellare il pasto "${lastMeal.name}"?`, {
       reply_markup: {
