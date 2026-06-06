@@ -9,6 +9,8 @@ export function registerMealHandler(bot: Telegraf<BotContext>) {
   });
 
   bot.action(/delete_last:(\d+)/, async (ctx) => {
+    await ctx.answerCbQuery();
+
     const mealId = Number(ctx.match[1]);
     const user = ctx.state.user!;
     const deleted = await deleteMeal(user.id, mealId);
@@ -21,6 +23,7 @@ export function registerMealHandler(bot: Telegraf<BotContext>) {
   });
 
   bot.action(/cancel_delete/, async (ctx) => {
+    await ctx.answerCbQuery();
     await ctx.deleteMessage();
   });
 }
