@@ -3,7 +3,6 @@ import type { Telegraf } from "telegraf";
 import { parseUserCommand, type AiUserCommand } from "@/services/ai";
 import { analyzeFoodAdvice } from "@/services/daily-analysis.service";
 import { formatMealTotals, saveMealItems } from "@/services/meals";
-import { replyWithDeleteLastMealConfirmation } from "./meal";
 import type { BotContext } from "../middleware/loadUser";
 import {
   addRecentAdviceMessage,
@@ -11,9 +10,11 @@ import {
 } from "../session/advice-session";
 import { replyWithTodayAnalysis } from "../utils/replyWithTodayAnalysis";
 import { transcribeTelegramVoice } from "../utils/transcribeTelegramVoice";
+import { replyWithDeleteLastMealConfirmation } from "./meal";
 
 export function registerUserMessageHandler(bot: Telegraf<BotContext>) {
   bot.on("text", async (ctx) => {
+    await ctx.sendChatAction("typing");
     return handleUserMessage(ctx, ctx.message.text);
   });
 

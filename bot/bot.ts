@@ -17,8 +17,8 @@ export const bot = new Telegraf<BotContext>(process.env.TELEGRAM_BOT_TOKEN!);
 bot.use(session({ defaultSession: createDefaultSession }));
 bot.use(loadUser);
 bot.use(checkUserProfile);
-
 registerStartHandler(bot);
+
 registerProfileHandlers(bot);
 registerOnboardingHandler(bot);
 registerMealHandler(bot);

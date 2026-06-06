@@ -31,8 +31,17 @@ export const checkUserProfile = (
   ctx: BotContext,
   next: () => Promise<void>,
 ) => {
+  const messageText =
+    ctx.message && "text" in ctx.message ? ctx.message.text : "";
+  const isStartCommand = /^\/start(?:@\w+)?(?:\s|$)/i.test(messageText);
+
+  if (isStartCommand) {
+    return next();
+  }
+
   if (!ctx.state.user) {
     return ctx.reply("Completa prima il profilo con /start.");
   }
+
   return next();
 };
