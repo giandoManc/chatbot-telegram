@@ -7,6 +7,7 @@ import type { BotContext } from "../middleware/loadUser";
 import {
   addRecentAdviceMessage,
   getRecentAdviceMessages,
+  setPendingMealConfirmation,
 } from "../session/advice-session";
 import { replyWithTodayAnalysis } from "../utils/replyWithTodayAnalysis";
 import { transcribeTelegramVoice } from "../utils/transcribeTelegramVoice";
@@ -120,6 +121,36 @@ async function replyWithSavedMeal({
   transcription?: string;
   userId: number;
 }) {
+  if (shouldAskMealConfirmation(command)) {
+    setPendingMealConfirmation(ctx, {
+      items: command.meal.items,
+      reply: command.reply,
+      transcription,
+      createdAt: Date.now(),
+    });
+
+    return ctx.reply(
+      [
+        transcription ? `Ho capito: "${transcription}"` : null,
+        command.reply,
+        "",
+        "Vuoi salvarlo?",
+      ]
+        .filter(Boolean)
+        .join("\n"),
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: "Sì", callback_data: "confirm_meal:yes" },
+              { text: "No", callback_data: "confirm_meal:no" },
+            ],
+          ],
+        },
+      },
+    );
+  }
+
   const totals = await saveMealItems({
     userId,
     items: command.meal.items,
@@ -134,5 +165,25 @@ async function replyWithSavedMeal({
     ]
       .filter(Boolean)
       .join("\n"),
+  );
+}
+
+function shouldAskMealConfirmation(
+  command: Extract<AiUserCommand, { action: "ADD_MEAL" }>,
+) {
+  const uncertaintyWords = [
+    "stima",
+    "stimati",
+    "stimato",
+    "circa",
+    "quantita",
+    "quantità",
+    "porzione media",
+  ];
+  const reply = command.reply.toLowerCase();
+
+  return (
+    command.confidence < 0.7 ||
+    uncertaintyWords.some((word) => reply.includes(word))
   );
 }

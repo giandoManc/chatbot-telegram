@@ -1,7 +1,16 @@
 import type { Telegraf } from "telegraf";
 
-import { deleteMeal, getLastMeal } from "@/services/meals";
+import {
+  deleteMeal,
+  formatMealTotals,
+  getLastMeal,
+  saveMealItems,
+} from "@/services/meals";
 import type { BotContext } from "../middleware/loadUser";
+import {
+  clearPendingMealConfirmation,
+  getPendingMealConfirmation,
+} from "../session/advice-session";
 
 export function registerMealHandler(bot: Telegraf<BotContext>) {
   bot.command("delete_last", async (ctx) => {
@@ -25,6 +34,34 @@ export function registerMealHandler(bot: Telegraf<BotContext>) {
   bot.action(/cancel_delete/, async (ctx) => {
     await ctx.answerCbQuery();
     await ctx.deleteMessage();
+  });
+
+  bot.action("confirm_meal:yes", async (ctx) => {
+    await ctx.answerCbQuery();
+
+    const pendingMeal = getPendingMealConfirmation(ctx);
+
+    if (!pendingMeal) {
+      return ctx.editMessageText("Non ho trovato un pasto da confermare.");
+    }
+
+    const totals = await saveMealItems({
+      userId: ctx.state.user!.id,
+      items: pendingMeal.items,
+    });
+
+    clearPendingMealConfirmation(ctx);
+
+    return ctx.editMessageText(
+      [pendingMeal.reply, "", formatMealTotals(totals)].join("\n"),
+    );
+  });
+
+  bot.action("confirm_meal:no", async (ctx) => {
+    await ctx.answerCbQuery();
+    clearPendingMealConfirmation(ctx);
+
+    return ctx.editMessageText("Ok, non salvo questo pasto.");
   });
 }
 
